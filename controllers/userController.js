@@ -2,6 +2,7 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import nodemailer from "nodemailer";
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -58,4 +59,49 @@ const registerUser = async (req, res) => {
     res.json({ success: false, message: "Error" });
   }
 };
-export {loginUser, registerUser}
+
+const forgotPassword =async(req,res)=>{
+  const {email}=req.body;
+
+  const user = await userModel.findOne({email})
+  if (!user) return res.json({success:false, message:"User not found"})
+  
+  const otp= Math.floor(1000 + Math.random()*9000).toString();
+
+  user.otp= otp;
+  user.otpExpires = Date.now() + 5 * 60 * 1000
+  await user.save()
+
+  const transporter = nodemailer.createTransport({
+    service:"gmail",
+    auth:{
+      user:"nodemailsmtp@gmail.com",
+      pass:"gsqz fdzz krzf shru"
+    }
+  })
+
+  await transporter.sendMail({
+    to:email,
+    subject:"Your OTP Code",
+    text:`Your OTP is ${otp}`
+  })
+  return res.json({success: true, message:"OTP sent to email"})
+}
+
+const verifyOtp = async(req, res)=>{
+  const {email, otp} = req.body;
+  const user = await userModel.findOne({email});
+  if(!user) return res.json({ success:false, message:"User not found"});
+  if(user.otp !==otp)return res.json({ success:false, message:"Invalid OTP"})
+  if (user.otpExpires < Date.now())
+    return res.json({ success:false, message:"OTP expired"})
+  return res.json({success:true, message:"OTP verified"})
+}
+
+const resetPassword = async (req,res)=>{
+  const {email, newPassword}= req.body
+  const hashedPassword =await bcrypt.hash(newPassword, 10);
+  await userModel.findOneAndUpdate({ email }, { password: hashedPassword, otp:null, otpExpires:null})
+  return res.json({ success:true, message:"password updated successfully"})
+}
+export {loginUser, registerUser, forgotPassword, verifyOtp, resetPassword}

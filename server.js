@@ -3,11 +3,14 @@ import { connectDB } from "./lib/db.js"
 import userRouter from "./routes/userRouter.js"
 import todoRouter from "./routes/todoRouter.js"
 import "dotenv/config"
+import cors from "cors";
 
 const app = express()
 const port= 5000
 
 await connectDB()
+
+app.use(cors());
 
 app.use(express.json());
 app.use("/api/user", userRouter)
