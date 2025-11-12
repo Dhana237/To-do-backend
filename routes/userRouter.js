@@ -6,5 +6,5 @@ userRouter.post("/signUp", registerUser)
 userRouter.post("/login", loginUser)
 userRouter.post("/forgot-password", forgotPassword)
 userRouter.post("/verify-otp", verifyOtp)
-userRouter.post("reset-password", resetPassword)
+userRouter.post("/reset-password", resetPassword)
 export default userRouter
